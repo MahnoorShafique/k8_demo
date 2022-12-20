@@ -1,0 +1,7 @@
+#this is configmap for mongo db database
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mongo-config # any arbitray name
+data:
+   mongo-url: mongo-service  # this is service name of mongo db which will be the end point of mongodb. we'll create this mongo-service

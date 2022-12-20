@@ -1,0 +1,55 @@
+#deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-deployment
+  labels:
+    app: mongo # this is totally subjective, you can use anything as key and any value , but standard is to use 'app' as key and whatever value.
+spec: # deployment specific specifiction
+  replicas: 1 #how many pods you want to create using below template. here for db we used 1 replica as we cannot replicate db using deployment. for dbs we use statefulset.
+  selector:
+    matchLabels:
+      app: mongo
+  #below part actually configures the pod within a deployment.blue print for pods
+  template: # template is configuration of pods within configuration of deployemnt. template has its own meta data and its own specs just like deployment has
+    metadata:
+      labels:
+        app: mongo
+    spec:
+    #here is definition of containers. you can have multiple containers in a pod but mostly 1 main application per pod
+      containers:
+      - name: mongodb # name of container
+        image: mongo:5.0 # this defines which image will be used to create this pod 
+        ports:
+        - containerPort: 27017 # this is port where container will listen
+        env:
+         - name: MONGO_INITDB_ROOT_USERNAME
+           valueFrom:
+              secretKeyRef:
+                  name: mongo-secret
+                  key:  username
+         - name: MONGO_INITDB_ROOT_PASSWORD
+           valueFrom:
+              secretKeyRef:
+                  name: mongo-secret
+                  key:  password
+---
+#adding service ,becuase every application needs a service in k8s
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-service # this is endpoint we use to access mongodb,we defined as value of mongo-url in config file
+  #below are service specific attributes
+spec:
+#services need to forward the request that it gets to its endpoint pods. How does service know which pods belong to it and which 
+#one it should forward the requests to
+  selector:
+    #this should match the label of pods that belong to this service
+    app: mongo
+  ports:
+    - protocol: TCP
+      port: 27017 #sets service port
+      targetPort: 27017 #port of pods that belong to this service/containerPod of deployment.targetport should be same as containerPort
+      #because that is where application in pod is accessible.targetPort tells service which port of pod to send request.
+
+      #port and targetPort values can be same and different as well.

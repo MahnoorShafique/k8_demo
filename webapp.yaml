@@ -1,0 +1,66 @@
+#deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-deployment
+  labels:
+    app: webapp # this is totally subjective, you can use anything as key and any value , but standard is to use 'app' as key and whatever value.
+spec: # deployment specific specifiction
+  replicas: 1 #how many pods you want to create using below template. 
+  selector:
+    matchLabels:
+      app: webapp
+  #below part actually configures the pod within a deployment.blue print for pods
+  template: # template is configuration of pods within configuration of deployemnt. template has its own meta data and its own specs just like deployment has
+    metadata:
+      labels:
+        app: webapp
+    spec:
+    #here is definition of containers. you can have multiple containers in a pod but mostly 1 main application per pod
+      containers:
+      - name: webapp  # name of container
+        image: nanajanashia/k8s-demo-app:v1.0 # this defines which image will be used to create this pod 
+        ports:
+        - containerPort: 3000 # this is port where container will listen
+        #this app will communicate with db using below credentials.
+        env:
+        - name: USER_NAME
+          valueFrom:
+             secretKeyRef:
+                  name: mongo-secret
+                  key:  username
+        - name: USER_PWD
+          valueFrom:
+             secretKeyRef:
+                  name: mongo-secret
+                  key:  password
+        - name: DB_URL  # accesing this from config map
+          valueFrom:
+              configMapKeyRef:
+                  name: mongo-config
+                  key:   mongo-url # key under data in mongo-config
+
+---
+#adding service ,becuase every application needs a service in k8s
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-service # this is endpoint we use to access mongodb,we defined as value of mongo-url in config file
+  #below are service specific attributes
+spec:
+#services need to forward the request that it gets to its endpoint pods. How does service know which pods belong to it and which 
+#one it should forward the requests to
+  type: NodePort # making this service external service so that it can be accessible through web browser. DEfault is ClusterIp==> internal service.
+     # type: LoadBalancer
+  selector:
+    # app.kubernetes.io/name: MyApp 
+    #this should match the label of pods that belong to this service
+    app: webapp
+  ports:
+    - protocol: TCP
+      port: 3000 #sets service port
+      targetPort: 3000 #port of pods that belong to this service/containerPod of deployment.targetport should be same as containerPort
+      #because that is where application in pod is accessible.targetPort tells service which port of pod to send request.
+
+      #port and targetPort values can be same and different as well.
+      nodePort: 30200 #exposes service on each node IP at a static port. ranges between 30000--something
