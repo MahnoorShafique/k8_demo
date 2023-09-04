@@ -48,10 +48,12 @@ metadata:
   name: webapp-service # this is endpoint we use to access mongodb,we defined as value of mongo-url in config file
   #below are service specific attributes
 spec:
-#services need to forward the request that it gets to its endpoint pods. How does service know which pods belong to it and which 
-#one it should forward the requests to
-  type: NodePort # making this service external service so that it can be accessible through web browser. DEfault is ClusterIp==> internal service.
+     
+  type: NodePort 
+     # making this service external service so that it can be accessible through web browser. DEfault is ClusterIp==> internal service.
      # type: LoadBalancer
+      #services need to forward the request that it gets to its endpoint pods. How does service know which pods belong to it and which 
+      #one it should forward the requests to
   selector:
     # app.kubernetes.io/name: MyApp 
     #this should match the label of pods that belong to this service
